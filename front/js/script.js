@@ -4,10 +4,9 @@ fetch("http://localhost:3000/api/products")
        return res.json();
       }
     })
-    .then(function(data) {
-        console.log(data);
-        for(let i in data) {
-            addProduct(data[i]);
+    .then(function(productsList) {
+        for(let product of productsList) {
+            addProduct(product);
         }
     });
       
