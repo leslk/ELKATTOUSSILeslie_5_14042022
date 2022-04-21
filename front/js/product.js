@@ -7,7 +7,6 @@ fetch("http://localhost:3000/api/products/" + productId)
         return res.json();
     })
     .then(function(item) {
-        console.log(item);
         addItem(item);
     });
 
@@ -19,11 +18,11 @@ fetch("http://localhost:3000/api/products/" + productId)
         const productDescription = element.description;
         const alt = element.altTxt;
         
-        let image = document.createElement("img");
+        const image = document.createElement("img");
         image.setAttribute("src", imageUrl);
         image.setAttribute("alt", alt);
-        let container = document.getElementsByClassName("item__img")
-        let targetContainer = container[0];
+        const container = document.getElementsByClassName("item__img");
+        const targetContainer = container[0];
         targetContainer.appendChild(image);
     
         document.getElementById("title").textContent = name;
@@ -41,13 +40,34 @@ fetch("http://localhost:3000/api/products/" + productId)
     }
 
 document.getElementById("addToCart").addEventListener("click", function() {
-    let product = {
+    const product = {
         productId : productId,
-        productQuantity : document.getElementById("quantity").value,
-        productColor : document.getElementById("colors").options[document.getElementById('colors').selectedIndex].text,
-    };
-    localStorage.setItem("product",JSON.stringify(product));
-    window.location.href = "cart.html";
+        productQuantity : parseInt(document.getElementById("quantity").value),
+        productColor : document.getElementById("colors").options[document.getElementById('colors').selectedIndex].value
+    }
+    if (localStorage.getItem("product") == null) {
+        localStorage.setItem("product", JSON.stringify([]));
+    }
+
+    if (product.productColor == "" || product.productQuantity == 0) {
+       alert("Veuillez selectionner une quantité / une couleur !"); 
+    }
+    else {
+        let basket = JSON.parse(localStorage.getItem("product"));
+        let foundProduct = basket.find(element => product.productId == element.productId && product.productColor == element.productColor);
+        if (foundProduct) {
+            console.log(foundProduct);
+            foundProduct.productQuantity += product.productQuantity;
+            localStorage.setItem("product",JSON.stringify(basket));
+            alert("la quantité du produit " + document.getElementById("title").textContent + " a été ajusté");
+            window.location.href = "cart.html";
+        } else {
+            basket.push(product);
+            localStorage.setItem("product",JSON.stringify(basket));
+            alert("le produit a été ajouté au panier");
+            window.location.href = "cart.html";
+        }
+    } 
 });
 
     
