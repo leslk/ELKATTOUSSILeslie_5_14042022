@@ -1,5 +1,8 @@
 let url = new URL(window.location.href);
 let productId = url.searchParams.get("id");
+if (productId != null) {
+    let price = 0;
+}
 
 
 fetch("http://localhost:3000/api/products/" + productId)
@@ -14,7 +17,7 @@ fetch("http://localhost:3000/api/products/" + productId)
         const colors = element.colors;
         const imageUrl = element.imageUrl;
         const name = element.name;
-        const price = element.price;
+        price = element.price;
         const productDescription = element.description;
         const alt = element.altTxt;
         
@@ -41,30 +44,31 @@ fetch("http://localhost:3000/api/products/" + productId)
 
 document.getElementById("addToCart").addEventListener("click", function() {
     const product = {
-        productId : productId,
-        productQuantity : parseInt(document.getElementById("quantity").value),
-        productColor : document.getElementById("colors").options[document.getElementById('colors').selectedIndex].value
+        id : productId,
+        quantity : parseInt(document.getElementById("quantity").value),
+        price : price,
+        color : document.getElementById("colors").options[document.getElementById('colors').selectedIndex].value
     }
     if (localStorage.getItem("product") == null) {
         localStorage.setItem("product", JSON.stringify([]));
     }
 
-    if (product.productColor == "" || product.productQuantity == 0) {
+    if (product.color == "" || product.quantity == 0) {
        alert("Veuillez selectionner une quantité / une couleur !"); 
     }
     else {
         let basket = JSON.parse(localStorage.getItem("product"));
-        let foundProduct = basket.find(element => product.productId == element.productId && product.productColor == element.productColor);
+        let foundProduct = basket.find(element => product.id == element.id && product.color == element.color);
         if (foundProduct) {
-            console.log(foundProduct);
-            foundProduct.productQuantity += product.productQuantity;
+            foundProduct.quantity = parseInt(foundProduct.quantity);
+            foundProduct.quantity += product.quantity;
             localStorage.setItem("product",JSON.stringify(basket));
             alert("la quantité du produit " + document.getElementById("title").textContent + " a été ajusté");
             window.location.href = "cart.html";
         } else {
             basket.push(product);
             localStorage.setItem("product",JSON.stringify(basket));
-            alert("le produit a été ajouté au panier");
+            alert("le produit " + document.getElementById("title").textContent + " a été ajouté au panier");
             window.location.href = "cart.html";
         }
     } 
