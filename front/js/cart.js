@@ -6,10 +6,12 @@ getProducts().then(function () {
 });
 
 async function getProducts() {
+    // Set local variable with localStorage products
     products = JSON.parse(localStorage.getItem("product"));
     if (products === null) {
         products = [];
     }
+    // Get API data that are missing for each product of the local variable
     for (let product of products) {
         let res = await fetch("http://localhost:3000/api/products/" + product.id);
         let apiData = await res.json();
@@ -23,10 +25,13 @@ async function getProducts() {
 
 function createAllProducts(products) {
     resetTotal();
+    // Check if the cart is empty to display a message that precise it to the user
     if (products.length === 0) {
         document.getElementById("cart__items").innerHTML = "<p>Votre panier est vide</p>";
+        // Display global variables that contain the total price and quantity
         displayTotal(totalQuantity, totalPrice);
     } else {
+        // Display each product of the local variable and display total sum
         for (let product of products) {
             displayProduct(product);
             setTotalSum(product.price, product.quantity);
@@ -37,6 +42,7 @@ function createAllProducts(products) {
 
 
 function displayProduct(product) {
+    // Create new DOM elements that represents the cart
     const article = appendNewChild(document.getElementById("cart__items"),"article",
         [
             ["class", "cart__item"],
@@ -79,170 +85,154 @@ function displayProduct(product) {
             ["value", product.quantity]
         ]
     );
-    changeItemQuantity(itemInputQuantity, itemQuantity, product.id, product.color);
-
+    itemInputQuantity.addEventListener("change", function(event) {
+        changeItemQuantity(event.target.value, itemQuantity, product.id, product.color);
+    });
+    
     const itemContentSettingsDelete = appendNewChild(article, "div", [["class", "cart__item__content__settings__delete"]]);
 
     const deleteItem = appendNewChild(itemContentSettingsDelete, "p", [["class","deleteItem"]]);
     deleteItem.textContent = "supprimer";
-    deleteItemFromCart(deleteItem, product.id, product.color, article);
+    deleteItem.addEventListener("click", function(){
+        deleteItemFromCart(product.id, product.color, article);
+    }); 
 }
 
 function resetTotal(){
+    // Reset global variables to 0
     totalPrice = 0;
     totalQuantity = 0;;
 }
 
 function displayTotal(quantity, price) {
+    // Update HTML total elements with given quantity and price
     document.getElementById("totalQuantity").textContent = quantity;
     document.getElementById("totalPrice").textContent = price;
 }
 
 function setTotalSum(price, quantity) {
+    // Add total price and quantity to global variables
     totalPrice += parseInt(price) * parseInt(quantity);
     totalQuantity += parseInt(quantity);
 }
 
-function changeItemQuantity(ContentToWatch, itemQuantityContent, id, color) {
-    ContentToWatch.addEventListener("change", function(event) {
-        itemQuantityContent.textContent = event.target.value;
-        let itemToChange = products.find(element => element.id == id && element.color == color);
-        itemToChange.quantity = event.target.value;
-        let storedProducts = JSON.parse(localStorage.getItem("product"));
-        let index = storedProducts.indexOf(storedProducts.find(element => element.id == id && element.color == color));
-        storedProducts[index].quantity = itemToChange.quantity;
-        localStorage.setItem("product", JSON.stringify(storedProducts));
-        resetTotal();
+function changeItemQuantity(quantity, itemQuantityContent, id, color) {
+    // Update text quantity on HTML 
+    itemQuantityContent.textContent = "Qté : " + quantity;
+    // Find product stored in local variable and update quantity
+    let itemToChange = products.find(element => element.id == id && element.color == color);
+    itemToChange.quantity = quantity;
+    // Find product by index in localStorage and update quantity
+    let storedProducts = JSON.parse(localStorage.getItem("product"));
+    let index = storedProducts.indexOf(storedProducts.find(element => element.id == id && element.color == color));
+    storedProducts[index].quantity = itemToChange.quantity;
+    // Set localStorage back to it updated value
+    localStorage.setItem("product", JSON.stringify(storedProducts));
+    // Reset total quantity and price and display it
+    resetTotal();
+    for (let product of products) {
+        setTotalSum(product.price, product.quantity);
+    }
+    displayTotal(totalQuantity, totalPrice);
+}
+
+function deleteItemFromCart(id, color, domElement) {
+    // Find index in product stored in local variable and delete it
+    let index = products.indexOf(products.find(element => element.id == id && element.color == color));
+    products.splice(index, 1);
+    // Find product by index in localStorage and delete it
+    let storedProducts = JSON.parse(localStorage.getItem("product"));
+    index = storedProducts.indexOf(storedProducts.find(element => element.id == id && element.color == color));
+    storedProducts.splice(index, 1);
+    // Set localStorage back to updated products list
+    localStorage.setItem("product", JSON.stringify(storedProducts));
+    // Remove deleted product from HTML page
+    domElement.remove();
+    // Reset total quantity and price and display it
+    resetTotal();
+    if(products.length > 0) {
         for (let product of products) {
             setTotalSum(product.price, product.quantity);
         }
-        displayTotal(totalQuantity, totalPrice);
-    });
-}
-
-function deleteItemFromCart(itemToDelete, id, color, domElement) {
-    itemToDelete.addEventListener("click", function() {
-        let index = products.indexOf(products.find(element => element.id == id && element.color == color));
-        products.splice(index, 1);
-        let storedProducts = JSON.parse(localStorage.getItem("product"));
-        index = storedProducts.indexOf(storedProducts.find(element => element.id == id && element.color == color));
-        storedProducts.splice(index, 1);
-        localStorage.setItem("product", JSON.stringify(storedProducts));
-        domElement.remove();
-        resetTotal();
-        if(products.length > 0) {
-            for (let product of products) {
-                setTotalSum(product.price, product.quantity);
-            }
-        } 
-        displayTotal(totalQuantity, totalPrice);
-    });
+    } 
+    displayTotal(totalQuantity, totalPrice);
 }
 
 function appendNewChild(parent, childName, attributes = []) {
+    // Create new DOM element
     let child = document.createElement(childName);
+    // Set attribute for new DOM element
     for (let attribute of attributes) { 
       child.setAttribute(attribute[0], attribute[1]);
     }
+    // Append new DOM element to targeted parent
     parent.appendChild(child); 
+    // return the new DOM element
     return child; 
 }
 
-let emailRegex = RegExp("^([a-zA-Z0-9\.-_]+)@([a-zA-Z0-9-_]+)\.([a-z]{2,8})(\.[a-z]{2,8})$");
-let characterRegex = RegExp("^[a-zA-Zàâäéèêëïîôöùûüç'-]+$");
-let addressRegex = RegExp("^([a-zA-Z0-9,-\. ]{1,60})$");
+//prevents user from writting wrong email
+let emailRegex = /^([a-zA-Z0-9\.-_]+)@([a-zA-Z0-9-_]+)\.([a-z]{2,8})(\.[a-z]{2,8})?$/;
+//prevents user from writting wrong firstname, lastname and city
+let characterRegex = /^[a-zA-Zàâäéèêëïîôöùûüç'-]+$/;
+// prevents user from writting wrong address
+let addressRegex = /^([a-zA-Z0-9,-\. ]{1,60})$/;
 
+// Get form inputs
 let firstNameInput = document.getElementById("firstName");
 let lastNameInput = document.getElementById("lastName");
 let addressInput = document.getElementById("address");
 let cityInput = document.getElementById("city");
 let emailInput = document.getElementById("email");
 
+function checkUserInput(input, regex, errorMessage) {
+    // Get HTML element that contains error message
+    const errorContainer = input.nextElementSibling;
+    // Set HTML element text content to empty default value
+    errorContainer.textContent = "";
+    // Set HTML element text content to error message if regex is false
+    if (!regex.test(input.value)) {
+        errorContainer.textContent = errorMessage;
+    } 
+}
+
 function checkForm() {
-    
+    // Check email
     emailInput.addEventListener("change", function() {
-        validEmail(emailInput);
+        checkUserInput(emailInput, emailRegex, "veuillez renseigner une adresse mail valide");
     });
-
+    // check firstname
     firstNameInput.addEventListener("change", function() {
-        validFirstName(firstNameInput);
+        checkUserInput(firstNameInput, characterRegex, "veuillez renseigner un prénom valide");
     });
-
+    // Check lastname
     lastNameInput.addEventListener("change", function() {
-        validLastName(lastNameInput);
+        checkUserInput(lastNameInput, characterRegex, "veuillez renseigner un nom valide");
     });
-
+    // Check address
     addressInput.addEventListener("change", function() {
-        validAddress(addressInput);
+        checkUserInput(addressInput, addressRegex ,"veuillez renseigner une adresse valide");
     });
-
+    // Check city
     cityInput.addEventListener("change", function() {
-        validCity(cityInput);
-    });
-    
-    function validEmail(input) {
-        let errorMsg = input.nextElementSibling;
-    
-        if(emailRegex.test(input.value)) {
-            errorMsg.innerHTML = '';
-        } else {
-            errorMsg.innerHTML = "veuillez renseigner une adresse mail valide";
-        }
-    }
-
-    function validLastName(input) {
-        let errorMsg = input.nextElementSibling;
-    
-        if(characterRegex.test(input.value)) {
-            errorMsg.innerHTML = '';
-        } else {
-            errorMsg.innerHTML = "veuillez renseigner un nom valide";
-        }
-    }
-
-    function validFirstName(input) {
-        let errorMsg = input.nextElementSibling;
-    
-        if(characterRegex.test(input.value)) {
-            errorMsg.innerHTML = '';
-        } else {
-            errorMsg.innerHTML = "veuillez renseigner un prénom valide";
-        }
-    }
-
-    function validAddress(input) {
-        let errorMsg = input.nextElementSibling;
-    
-        if(addressRegex.test(input.value)) {
-            errorMsg.innerHTML = '';
-        } else {
-            errorMsg.innerHTML = "veuillez renseigner une adresse valide";
-        }
-    }
-
-    function validCity(input) {
-        let errorMsg = input.nextElementSibling;
-    
-        if(characterRegex.test(input.value)) {
-            errorMsg.innerHTML = '';
-        } else {
-            errorMsg.innerHTML = "veuillez renseigner une ville valide";
-        }
-    }
+        checkUserInput(cityInput, characterRegex, "veuillez renseigner une ville valide");
+    });   
 }
 checkForm();
 
-const submitButton = document.querySelector("#order");
-
-submitButton.addEventListener("click", function(event) {
+// Get HTML element matching to order button and add event listener 
+// to submit order when user click on it
+const orderButton = document.querySelector("#order");
+orderButton.addEventListener("click", function(event) {
     submitForm(event);
-})
+});
 
 function submitForm(event) {
-    
+    // Display alert if the cart is empty
     if(products.length === 0){
         alert("Veuillez selectionner un produit pour pouvoir continuer");
         event.preventDefault(); 
+    // Send data to the API
     } else {
         let orderData = getOrderData();
         fetch("http://localhost:3000/api/products/order", {
@@ -256,6 +246,7 @@ function submitForm(event) {
             return res.json();
         }).then(function(data) {
             console.log(data);
+            // redirect and add the order id to the confirmation page URL to display it
             window.location.href = "confirmation.html?orderId=" + data.orderId;
         }).catch(function(err){
             console.log(err);
@@ -264,10 +255,13 @@ function submitForm(event) {
 }
 
 function getOrderData() {
+    // Set variable with empty array
     let productsList = [];
+    // Create loop to push id of each product stored in local variable to the empty array
     for(let product of products) {
         productsList.push(product.id);
     }
+    // Create and return an object with required data by the API
     const dataContactAndOrder = {
         contact : {
         firstName: firstNameInput.value,

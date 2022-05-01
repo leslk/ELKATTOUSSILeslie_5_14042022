@@ -3,40 +3,53 @@ fetch("http://localhost:3000/api/products")
       if(res.ok){
        return res.json();
       }
+      return res.text().then(text => {
+        const htmlTag = document.querySelector("html");
+        htmlTag.replaceWith(text.innerHTML);
+      });
     })
     .then(function(productsList) {
         for(let product of productsList) {
             addProduct(product);
         }
+    })
+    .catch(function(error) {
+        console.log(error);
     });
       
 function addProduct(element) {
+    // Set API data in constants
     const id = element._id;
     const imageUrl = element.imageUrl;
     const name = element.name;
     const productDescription = element.description;
     const alt = element.altTxt;
 
-    let anchor = document.createElement("a");
-    anchor.setAttribute("href","./product.html?id=" + id);
-    document.getElementById("items").appendChild(anchor);
+    // Create new DOM elements
+    const anchor = appendNewChild(document.getElementById("items"), "a", [["href","./product.html?id=" + id]]);
 
-    let article = document.createElement("article");
-    anchor.appendChild(article);
+    const article = appendNewChild(anchor, "article");
     
-    let image = document.createElement("img");
-    image.setAttribute("src", imageUrl);
-    image.setAttribute("alt", alt);
-    article.appendChild(image);
+    appendNewChild(article, "img", [["src", imageUrl],["alt", alt]]);
 
-    let title = document.createElement("h3");
-    title.setAttribute("class", "productName");
+    const title = appendNewChild(article, "h3", [["class", "productName"]]);
     title.textContent = name;
-    article.appendChild(title);
 
-    let description = document.createElement("p");
-    description.setAttribute("class", "productDescription");
+    const description = appendNewChild(article, "p", [["class", "productDescription"]]);
     description.textContent = productDescription;
-    article.appendChild(description);
 }
+
+function appendNewChild(parent, childName, attributes = []) {
+    // Create new DOM element
+    let child = document.createElement(childName);
+    // Set attribute for new DOM element
+    for (let attribute of attributes) { 
+      child.setAttribute(attribute[0], attribute[1]);
+    }
+    // Append new DOM element to targeted parent
+    parent.appendChild(child); 
+    // return the new DOM element
+    return child; 
+}
+
 
