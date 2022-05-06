@@ -12,15 +12,41 @@ async function getProducts() {
         products = [];
     }
     // Get API data that are missing for each product of the local variable
-    for (let product of products) {
-        let res = await fetch("http://localhost:3000/api/products/" + product.id);
-        let apiData = await res.json();
-        //Set additional product attributes from API
-        product.imageUrl = apiData.imageUrl;
-        product.price = apiData.price;
-        product.name = apiData.name;
-        product.alt = apiData.altTxt;
-    } 
+    try {
+        for (let product of products) {
+            let res = await fetch("http://localhost:3000/api/products/" + product.id);
+            if(!res.ok) {
+                errorStatus = res.status;
+                console.log(errorStatus);
+                throw errorStatus;
+            }
+            let apiData = await res.json();
+            //Set additional product attributes from API
+            product.imageUrl = apiData.imageUrl;
+            product.price = apiData.price;
+            product.name = apiData.name;
+            product.alt = apiData.altTxt;
+        }
+     // Display error message in html page depending of the error number
+    } catch (errorStatus) {
+        let parent = document.getElementById("limitedWidthBlock");
+        let oldChild = document.getElementById("cartAndFormContainer");
+        let newChild = document.createElement("p");
+        switch (errorStatus) {
+            case 404 : 
+                newChild.textContent = "erreur " + errorStatus + " le produit n'a pas été trouvé";
+                break;
+
+            case 500 : 
+                newChild.textContent = "erreur " + errorStatus + " une erreur dans la base de donnée est survenue";
+                break;
+
+            default : 
+                newChild.textContent = "une erreur est survenue";
+       }
+       parent.replaceChild(newChild, oldChild);
+    }
+    
 }
 
 function createAllProducts(products) {
@@ -172,18 +198,18 @@ function appendNewChild(parent, childName, attributes = []) {
 }
 
 //prevents user from writting wrong email
-let emailRegex = /^([a-zA-Z0-9\.-_]+)@([a-zA-Z0-9-_]+)\.([a-z]{2,8})(\.[a-z]{2,8})?$/;
+const emailRegex = /^([a-zA-Z0-9\.-_]+)@([a-zA-Z0-9-_]+)\.([a-z]{2,8})(\.[a-z]{2,8})?$/;
 //prevents user from writting wrong firstname, lastname and city
-let characterRegex = /^[a-zA-Zàâäéèêëïîôöùûüç'-]+$/;
+const characterRegex = /^[a-zA-Zàâäéèêëïîôöùûüç'-]+$/;
 // prevents user from writting wrong address
-let addressRegex = /^([a-zA-Z0-9,-\. ]{1,60})$/;
+const addressRegex = /^([a-zA-Z0-9,-\. ]{1,60})$/;
 
 // Get form inputs
-let firstNameInput = document.getElementById("firstName");
-let lastNameInput = document.getElementById("lastName");
-let addressInput = document.getElementById("address");
-let cityInput = document.getElementById("city");
-let emailInput = document.getElementById("email");
+const firstNameInput = document.getElementById("firstName");
+const lastNameInput = document.getElementById("lastName");
+const addressInput = document.getElementById("address");
+const cityInput = document.getElementById("city");
+const emailInput = document.getElementById("email");
 
 function checkUserInput(input, regex, errorMessage) {
     // Get HTML element that contains error message
@@ -223,15 +249,32 @@ checkForm();
 // Get HTML element matching to order button and add event listener 
 // to submit order when user click on it
 const orderButton = document.querySelector("#order");
-orderButton.addEventListener("click", function(event) {
-    submitForm(event);
-});
+orderButton.addEventListener("click", submitForm);
+
+// Check the status response and send the status of error if needed
+function checkPost(response) {
+    if(!response.ok) {
+        throw response.status;
+    }
+}
 
 function submitForm(event) {
+    event.preventDefault(); 
+    // Set variable of empty inputs
+    let inputIsEmpty = false;
+    // Check if all inputs is filled
+    for (let input of [emailInput, firstNameInput, lastNameInput, addressInput, cityInput]) {
+        if (input.value === "") {
+            inputIsEmpty = true;
+        }
+    }
+    // Display alert if one of the input is empty
+    if (inputIsEmpty) {
+        alert("Veuillez remplir tous le champs");
+    }
     // Display alert if the cart is empty
-    if(products.length === 0){
+    else if(products.length === 0){
         alert("Veuillez selectionner un produit pour pouvoir continuer");
-        event.preventDefault(); 
     // Send data to the API
     } else {
         let orderData = getOrderData();
@@ -239,18 +282,39 @@ function submitForm(event) {
             method : "post",
             headers: { 
                 'Accept': 'application/json', 
-                'Content-Type': 'application/json' 
+                'Content-Type': 'application/json',
             },    
             body : JSON.stringify(orderData),
         }).then(function(res){
+            checkPost(res);
             return res.json();
         }).then(function(data) {
-            console.log(data);
             // redirect and add the order id to the confirmation page URL to display it
+            localStorage.clear();
             window.location.href = "confirmation.html?orderId=" + data.orderId;
-        }).catch(function(err){
-            console.log(err);
-        })
+            // Display error message in html page depending of the error number
+        }).catch(function(errorStatus){
+            let parent = document.getElementById("limitedWidthBlock");
+            let oldChild = document.getElementById("cartAndFormContainer");
+            let newChild = document.createElement("p");
+            switch (errorStatus) {
+                case 400 : 
+                    newChild.textContent = "Erreur " + errorStatus + " :  mauvaise requête";
+                    break;
+
+                case 404 : 
+                    newChild.textContent = "Erreur " + errorStatus + " :  le produit n'a pas été trouvé";
+                    break;
+    
+                case 500 : 
+                    newChild.textContent = "Erreur " + errorStatus + " :  une erreur dans la base de donnée est survenue";
+                    break;
+    
+                default : 
+                    newChild.textContent = "Une erreur est survenue";
+           }
+           parent.replaceChild(newChild, oldChild);
+        });
     }
 }
 

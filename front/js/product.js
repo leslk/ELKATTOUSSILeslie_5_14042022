@@ -1,14 +1,41 @@
 // Create a new URL object to catch the id of the selected product
-let url = new URL(window.location.href);
-let productId = url.searchParams.get("id");
+let productId  = new URL(window.location.href).searchParams.get("id");
+
+// Check the status response and send the status of error if needed
+function checkFetch(response) {
+    if(!response.ok) {
+        throw response.status;
+    }
+}
 
 fetch("http://localhost:3000/api/products/" + productId)
     .then(function(res) {
+        checkFetch(res);
         return res.json();
     })
     .then(function(item) {
         addItem(item);
+    })
+    // Display error message in html page depending of the error number
+    .catch(function(errorStatus) {
+        let parent = document.getElementsByClassName("limitedWidthBlock");
+            let oldChild = document.querySelector(".item");
+            let newChild = document.createElement("p");
+            switch (errorStatus) {
+                case 404 : 
+                    newChild.textContent = "Erreur " + errorStatus + " :  le produit n'a pas été trouvé";
+                    break;
+    
+                case 500 : 
+                    newChild.textContent = "Erreur " + errorStatus + " :  une erreur dans la base de donnée est survenue";
+                    break;
+    
+                default : 
+                    newChild.textContent = "Une erreur est survenue";
+           }
+           parent[2].replaceChild(newChild, oldChild);
     });
+      
 
 function addItem(element) {
     // Set API data in constants

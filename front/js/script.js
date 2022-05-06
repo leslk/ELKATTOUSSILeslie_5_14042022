@@ -1,20 +1,38 @@
+// Check the status response and send the status of error if needed
+function checkFetch(response) {
+    if(!response.ok) {
+        throw response.status;
+    }
+}
+
 fetch("http://localhost:3000/api/products")
     .then(function(res) {
-      if(res.ok){
+        checkFetch(res);
        return res.json();
-      }
-      return res.text().then(text => {
-        const htmlTag = document.querySelector("html");
-        htmlTag.replaceWith(text.innerHTML);
-      });
     })
     .then(function(productsList) {
         for(let product of productsList) {
             addProduct(product);
         }
     })
-    .catch(function(error) {
-        console.log(error);
+    // Display error message in html page depending of the error number
+    .catch(function(errorStatus){
+        let parent = document.getElementsByClassName("limitedWidthBlock");
+        let oldChild = document.querySelector(".titles");
+        let newChild = document.createElement("p");
+        switch (errorStatus) {
+            case 404 : 
+                newChild.textContent = "Erreur " + errorStatus + " :  les produits n'ont pas été trouvés";
+                break;
+
+            case 500 : 
+                newChild.textContent = "Erreur " + errorStatus + " :  une erreur dans la base de donnée est survenue";
+                break;
+
+            default : 
+                newChild.textContent = "Une erreur est survenue";
+       }
+       parent[2].replaceChild(newChild, oldChild);
     });
       
 function addProduct(element) {
