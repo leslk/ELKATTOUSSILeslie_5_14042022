@@ -211,40 +211,49 @@ const addressInput = document.getElementById("address");
 const cityInput = document.getElementById("city");
 const emailInput = document.getElementById("email");
 
+//set boolean variables to check inputs
+let emailOk = false;
+let firstNameOk = false;
+let lastNameOk = false;
+let addressOk = false;
+let cityOk = false;
+
 function checkUserInput(input, regex, errorMessage) {
     // Get HTML element that contains error message
     const errorContainer = input.nextElementSibling;
     // Set HTML element text content to empty default value
     errorContainer.textContent = "";
     // Set HTML element text content to error message if regex is false
-    if (!regex.test(input.value)) {
+    if (!regex.test(input.value) || input.value == "") {
         errorContainer.textContent = errorMessage;
-    } 
+        return false;
+    }
+    return true; 
 }
 
-function checkForm() {
+function setEventListeners() {
     // Check email
     emailInput.addEventListener("change", function() {
-        checkUserInput(emailInput, emailRegex, "veuillez renseigner une adresse mail valide");
+        emailOk = checkUserInput(emailInput, emailRegex, "Veuillez renseigner une adresse mail valide");
     });
     // check firstname
     firstNameInput.addEventListener("change", function() {
-        checkUserInput(firstNameInput, characterRegex, "veuillez renseigner un prénom valide");
+        firstNameOk = checkUserInput(firstNameInput, characterRegex, "Veuillez renseigner un prénom valide");
     });
     // Check lastname
     lastNameInput.addEventListener("change", function() {
-        checkUserInput(lastNameInput, characterRegex, "veuillez renseigner un nom valide");
+        lastNameOk = checkUserInput(lastNameInput, characterRegex, "Veuillez renseigner un nom valide");
     });
     // Check address
     addressInput.addEventListener("change", function() {
-        checkUserInput(addressInput, addressRegex ,"veuillez renseigner une adresse valide");
+        addressOk = checkUserInput(addressInput, addressRegex ,"Veuillez renseigner une adresse valide");
     });
     // Check city
     cityInput.addEventListener("change", function() {
-        checkUserInput(cityInput, characterRegex, "veuillez renseigner une ville valide");
+        cityOk = checkUserInput(cityInput, characterRegex, "Veuillez renseigner une ville valide");
     });   
 }
-checkForm();
+setEventListeners();
 
 // Get HTML element matching to order button and add event listener 
 // to submit order when user click on it
@@ -260,17 +269,9 @@ function checkPost(response) {
 
 function submitForm(event) {
     event.preventDefault(); 
-    // Set variable of empty inputs
-    let inputIsEmpty = false;
-    // Check if all inputs is filled
-    for (let input of [emailInput, firstNameInput, lastNameInput, addressInput, cityInput]) {
-        if (input.value === "") {
-            inputIsEmpty = true;
-        }
-    }
-    // Display alert if one of the input is empty
-    if (inputIsEmpty) {
-        alert("Veuillez remplir tous le champs");
+    // Check if inputs are valid
+    if (!emailOk || !firstNameOk || !lastNameOk || !addressOk || !cityOk) {
+        alert("Veuillez vérifier les champs renseignés");
     }
     // Display alert if the cart is empty
     else if(products.length === 0){
