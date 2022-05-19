@@ -112,7 +112,7 @@ function displayProduct(product) {
         ]
     );
     itemInputQuantity.addEventListener("change", function(event) {
-        changeItemQuantity(event.target.value, itemQuantity, product.id, product.color);
+        changeItemQuantity(event.target.value, itemQuantity, product.id, product.color, itemInputQuantity);
     });
     
     const itemContentSettingsDelete = appendNewChild(article, "div", [["class", "cart__item__content__settings__delete"]]);
@@ -142,7 +142,13 @@ function setTotalSum(price, quantity) {
     totalQuantity += parseInt(quantity);
 }
 
-function changeItemQuantity(quantity, itemQuantityContent, id, color) {
+function changeItemQuantity(quantity, itemQuantityContent, id, color, inputElement) {
+    if (quantity > 100) {
+        itemQuantityContent.textContent = "Qté : " + 100;
+        quantity = 100; 
+        inputElement.value = "100";
+        alert("Vous pouvez ajouter seulement 100 pièces par produit");
+    }
     // Update text quantity on HTML 
     itemQuantityContent.textContent = "Qté : " + quantity;
     // Find product stored in local variable and update quantity

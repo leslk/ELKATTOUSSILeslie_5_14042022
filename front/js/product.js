@@ -46,7 +46,7 @@ function addItem(element) {
     const productDescription = element.description;
     const alt = element.altTxt;
     
-    // Create new DOM elements
+    // Create image and set DOM elements
     appendNewChild(document.querySelector(".item__img"), "img", [["src", imageUrl],["alt", alt]]);
 
     document.getElementById("title").textContent = name;
@@ -81,6 +81,9 @@ function addToCart() {
     // Check if product quantity has been selected and display an alert to inform the user
     else if (product.quantity == 0) {
         alert("Veuillez selectionner une quantité !"); 
+    }
+    else if(product.quantity > 100){
+        alert("vous avez depassé la quantité autorisé de 100 pièces par produit")
     }
     // Get the localStorage and check if a product with same id and color has already been added
     else {
